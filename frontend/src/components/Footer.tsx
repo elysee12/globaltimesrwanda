@@ -22,7 +22,7 @@ const Footer = () => {
               <a href="#" className="hover:text-gold transition-colors">
                 <Twitter className="h-5 w-5" />
               </a>
-              <a href="https://www.youtube.com/@elyseetuyisenge4686" className="hover:text-gold transition-colors">
+              <a href="https://www.youtube.com/@RobertBashimiki250" className="hover:text-gold transition-colors" title="GLOBAL TIMES RWANDA TV">
                 <Youtube className="h-5 w-5" />
               </a>
               <a href="//www.instagram.com/elyse12_" className="hover:text-gold transition-colors">

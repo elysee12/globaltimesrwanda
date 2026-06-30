@@ -52,7 +52,7 @@ const Navbar = () => {
     { name: t("nav.education"), path: "/education" },
     { name: t("nav.myStory"), path: "/my-story" },
     { name: t("nav.others"), path: "/others" },
-    { name: "Videos", path: "https://www.youtube.com/@elyseetuyisenge4686", external: true },
+    { name: "Videos", path: "https://www.youtube.com/@RobertBashimiki250", external: true },
     { name: t("nav.contact"), path: "/contact" },
   ];
 
