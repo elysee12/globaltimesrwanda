@@ -11,11 +11,13 @@ import { StatsModule } from './stats/stats.module';
 import { AnnouncementsModule } from './announcements/announcements.module';
 import { ContactModule } from './contact/contact.module';
 import { SocialPreviewModule } from './social-preview/social-preview.module';
+import { CommentsModule } from './comments/comments.module';
 
 @Module({
   imports: [
     PrismaModule,
     AuthModule,
+    SocialPreviewModule,
     NewsModule,
     AdvertisementsModule,
     MediaModule,
@@ -23,7 +25,7 @@ import { SocialPreviewModule } from './social-preview/social-preview.module';
     StatsModule,
     AnnouncementsModule,
     ContactModule,
-    SocialPreviewModule,
+    CommentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

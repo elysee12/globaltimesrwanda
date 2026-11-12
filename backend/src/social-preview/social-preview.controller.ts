@@ -1,35 +1,23 @@
 /**
  * SocialPreviewController
  *
- * Handles GET /preview/news/:slug and GET /preview/announcements/:id
+ * Handles:
+ *   GET /preview/news/:slug      — legacy direct preview endpoint
+ *   GET /news/:slug              — intercepts social-media-bot requests at the
+ *                                  canonical article URL and returns OG-tagged HTML;
+ *                                  real browsers are proxied through to the SPA.
+ *   GET /preview/announcements/:id
  *
  * Social media crawlers (Facebook, WhatsApp, Twitter/X, LinkedIn, Telegram, …)
  * do NOT execute JavaScript.  Because the main frontend is a React SPA, crawlers
  * receive the bare index.html shell and never see article-specific meta tags.
  *
  * This controller solves that by serving a tiny, server-rendered HTML page that
- * contains all required Open Graph and Twitter Card meta tags, populated from
- * the real article data fetched from the database.
+ * contains all required Open Graph and Twitter Card meta tags for BOTH the
+ * /preview/news/:slug endpoint AND the canonical /news/:slug URL.
  *
- * Real browsers are immediately redirected to the SPA URL via a <meta refresh>
- * and a JS redirect so they never stay on this page.
- *
- * How to wire up the sharing flow
- * --------------------------------
- * Option A — share /preview/news/<slug> directly (simplest).
- * Option B — configure your reverse proxy (Nginx / Caddy) to proxy requests
- *            for /news/<slug> to this backend endpoint when the User-Agent
- *            looks like a bot, and let real browser traffic pass to the SPA.
- *
- * Example Nginx rule:
- *
- *   location ~* "^/news/(.+)$" {
- *     if ($http_user_agent ~* "facebookexternalhit|whatsapp|twitterbot|linkedinbot|telegrambot|slackbot|discordbot|googlebot") {
- *       proxy_pass http://localhost:3000/preview/news/$1;
- *       break;
- *     }
- *     try_files $uri /index.html;
- *   }
+ * Real browsers hitting /news/:slug get a full HTML page that immediately
+ * redirects them to the SPA via meta-refresh + JS.
  */
 
 import { Controller, Get, Param, Req, Res } from '@nestjs/common';
@@ -97,11 +85,10 @@ interface OgOptions {
   description: string;
   imageUrl: string;
   canonicalUrl: string; // SPA article URL (the URL users actually share)
-  previewUrl: string;   // This endpoint's URL (for og:url so crawlers use it)
   author: string;
   publishedAt: string | null;
   siteName: string;
-  spaUrl: string;       // Frontend base URL, used in the redirect script
+  isBot: boolean;       // true → no redirect; false → redirect to SPA immediately
 }
 
 function buildPreviewHtml(o: OgOptions): string {
@@ -111,6 +98,13 @@ function buildPreviewHtml(o: OgOptions): string {
   const canonical = escHtml(o.canonicalUrl);
   const author = escHtml(o.author);
   const site = escHtml(o.siteName);
+
+  const redirectBlock = o.isBot
+    ? '' // bots: no redirect — let them read the tags
+    : `
+  <!-- ── Redirect real browsers to the SPA immediately ───────────────── -->
+  <meta http-equiv="refresh" content="0;url=${canonical}" />
+  <script>window.location.replace(${JSON.stringify(o.canonicalUrl)});</script>`;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -144,13 +138,7 @@ function buildPreviewHtml(o: OgOptions): string {
   <meta name="twitter:description" content="${desc}" />
   <meta name="twitter:image" content="${image}" />
   <meta name="twitter:image:alt" content="${title}" />
-
-  <!-- ── Redirect real browsers to the SPA immediately ───────────────── -->
-  <meta http-equiv="refresh" content="0;url=${canonical}" />
-  <script>
-    // Bots ignore <script>; real browsers land here and get redirected.
-    window.location.replace(${JSON.stringify(o.canonicalUrl)});
-  </script>
+${redirectBlock}
 </head>
 <body>
   <!-- Minimal visible content for accessibility and fallback text crawlers -->
@@ -169,44 +157,78 @@ function buildPreviewHtml(o: OgOptions): string {
 // Controller
 // ---------------------------------------------------------------------------
 
-@Controller('preview')
+@Controller()
 export class SocialPreviewController {
   constructor(private readonly prisma: PrismaService) {}
 
-  // ── News article preview ──────────────────────────────────────────────────
+  // ── Canonical news URL — intercepts both bots and browsers ───────────────
+  //
+  // This is the KEY route: when a user shares
+  //   https://globaltimesrwanda.com/news/my-article-42
+  // WhatsApp/Facebook/Telegram crawlers hit this endpoint directly on the
+  // backend and receive the OG-tagged HTML.
+  //
+  // Real browsers hitting this URL get the same HTML page, which immediately
+  // redirects them to the SPA (meta-refresh + JS), so they never notice.
+  //
+  // NestJS note: NewsController also has GET /news/:id (with ParseIntPipe).
+  // For numeric-only slugs the NewsController API route handles them fine since
+  // ParseIntPipe accepts them. For full slugs like "my-article-42", NestJS
+  // will try NewsController first (ParseIntPipe fails → 400) then fall through
+  // to this route. We therefore add a guard: if the slug looks purely numeric,
+  // redirect directly to the SPA so the API /news/:id endpoint is unaffected.
 
   @Get('news/:slug')
+  async newsArticle(
+    @Param('slug') slug: string,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    // Pure numeric slug → this is an API request for /news/:id, don't intercept
+    if (/^\d+$/.test(slug)) {
+      const frontendUrl = this.getFrontendUrl();
+      return res.redirect(302, `${frontendUrl}/news/${slug}`);
+    }
+    return this.serveNewsPreview(slug, req, res);
+  }
+
+  // ── Legacy /preview/news/:slug — kept for backward compatibility ──────────
+
+  @Get('preview/news/:slug')
   async previewNews(
     @Param('slug') slug: string,
     @Req() req: Request,
     @Res() res: Response,
   ) {
+    return this.serveNewsPreview(slug, req, res);
+  }
+
+  // ── Shared logic for both news routes ────────────────────────────────────
+
+  private async serveNewsPreview(
+    slug: string,
+    req: Request,
+    res: Response,
+  ) {
     const frontendUrl = this.getFrontendUrl();
     const backendUrl = this.getBackendUrl(req);
     const siteName = process.env.SITE_NAME || 'Global Times Rwanda';
-
-    // Non-bot browsers: just redirect to the SPA immediately.
     const userAgent = req.headers['user-agent'] || '';
-    if (!isBotUserAgent(userAgent)) {
-      // Try to find the article to redirect to its canonical slug URL
-      const article = await this.findNewsBySlug(slug);
-      const canonicalSlug = article?.slug || slug;
-      return res.redirect(302, `${frontendUrl}/news/${canonicalSlug}`);
-    }
+    const isBot = isBotUserAgent(userAgent);
 
-    // Bot request: fetch article and return OG-tagged HTML
     try {
       const news = await this.findNewsBySlug(slug);
 
       if (!news) {
-        return res
-          .status(404)
-          .send(this.notFoundHtml('Article not found', siteName));
+        if (!isBot) {
+          // Real browser: redirect to SPA 404
+          return res.redirect(302, `${frontendUrl}/news/${slug}`);
+        }
+        return res.status(404).send(this.notFoundHtml('Article not found', siteName));
       }
 
       const title = news.titleEN || news.titleRW || news.titleFR || siteName;
-      const rawDescription =
-        news.excerptEN || news.excerptRW || news.excerptFR || '';
+      const rawDescription = news.excerptEN || news.excerptRW || news.excerptFR || '';
       const description = stripHtml(rawDescription);
       const imageUrl = this.resolveImageUrl(news.image, news.images as string[] | null, backendUrl, frontendUrl);
       const canonicalUrl = `${frontendUrl}/news/${news.slug}`;
@@ -216,29 +238,34 @@ export class SocialPreviewController {
         description,
         imageUrl,
         canonicalUrl,
-        previewUrl: `${backendUrl}/preview/news/${news.slug}`,
         author: news.author,
         publishedAt: news.publishedAt
           ? news.publishedAt.toISOString()
           : news.createdAt.toISOString(),
         siteName,
-        spaUrl: frontendUrl,
+        isBot,
       });
 
-      // Let social platforms cache this for 10 minutes
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      res.setHeader('Cache-Control', 'public, max-age=600, s-maxage=600');
+      // Bots: cache for 10 min; browsers: no cache (they redirect immediately)
+      res.setHeader(
+        'Cache-Control',
+        isBot
+          ? 'public, max-age=600, s-maxage=600'
+          : 'no-store',
+      );
       return res.status(200).send(html);
     } catch {
-      return res
-        .status(500)
-        .send(this.errorHtml('Could not load article', siteName));
+      if (!isBot) {
+        return res.redirect(302, `${frontendUrl}/news/${slug}`);
+      }
+      return res.status(500).send(this.errorHtml('Could not load article', siteName));
     }
   }
 
   // ── Announcement preview ──────────────────────────────────────────────────
 
-  @Get('announcements/:id')
+  @Get('preview/announcements/:id')
   async previewAnnouncement(
     @Param('id') idParam: string,
     @Req() req: Request,
@@ -249,11 +276,8 @@ export class SocialPreviewController {
     const backendUrl = this.getBackendUrl(req);
     const siteName = process.env.SITE_NAME || 'Global Times Rwanda';
     const canonicalUrl = `${frontendUrl}/announcements/${id}`;
-
     const userAgent = req.headers['user-agent'] || '';
-    if (!isBotUserAgent(userAgent)) {
-      return res.redirect(302, canonicalUrl);
-    }
+    const isBot = isBotUserAgent(userAgent);
 
     if (isNaN(id)) {
       return res.status(400).send(this.notFoundHtml('Invalid ID', siteName));
@@ -263,15 +287,12 @@ export class SocialPreviewController {
       const ann = await this.prisma.announcement.findUnique({ where: { id } });
 
       if (!ann) {
-        return res
-          .status(404)
-          .send(this.notFoundHtml('Announcement not found', siteName));
+        if (!isBot) return res.redirect(302, canonicalUrl);
+        return res.status(404).send(this.notFoundHtml('Announcement not found', siteName));
       }
 
-      const title =
-        ann.titleEN || ann.titleRW || ann.titleFR || 'Announcement';
-      const rawDesc =
-        ann.descriptionEN || ann.descriptionRW || ann.descriptionFR || '';
+      const title = ann.titleEN || ann.titleRW || ann.titleFR || 'Announcement';
+      const rawDesc = ann.descriptionEN || ann.descriptionRW || ann.descriptionFR || '';
       const description = stripHtml(rawDesc);
       const imageUrl = ann.image
         ? this.resolveImageUrl(ann.image, null, backendUrl, frontendUrl)
@@ -282,29 +303,23 @@ export class SocialPreviewController {
         description,
         imageUrl,
         canonicalUrl,
-        previewUrl: `${backendUrl}/preview/announcements/${id}`,
         author: siteName,
         publishedAt: ann.createdAt.toISOString(),
         siteName,
-        spaUrl: frontendUrl,
+        isBot,
       });
 
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      res.setHeader('Cache-Control', 'public, max-age=600, s-maxage=600');
+      res.setHeader('Cache-Control', isBot ? 'public, max-age=600, s-maxage=600' : 'no-store');
       return res.status(200).send(html);
     } catch {
-      return res
-        .status(500)
-        .send(this.errorHtml('Could not load announcement', siteName));
+      if (!isBot) return res.redirect(302, canonicalUrl);
+      return res.status(500).send(this.errorHtml('Could not load announcement', siteName));
     }
   }
 
   // ── Private helpers ───────────────────────────────────────────────────────
 
-  /**
-   * Finds a news article by exact slug, then falls back to extracting the
-   * trailing numeric ID for backward-compatible old-format URLs.
-   */
   private async findNewsBySlug(slug: string) {
     // 1. Exact slug match
     let news = await this.prisma.news.findUnique({ where: { slug } });
@@ -319,7 +334,6 @@ export class SocialPreviewController {
     return news ?? null;
   }
 
-  /** Returns the absolute URL to the article's featured image. */
   private resolveImageUrl(
     image: string | null,
     images: string[] | null,
@@ -329,7 +343,6 @@ export class SocialPreviewController {
     const raw = image || (Array.isArray(images) && images.length > 0 ? images[0] : null);
 
     if (!raw) return `${frontendUrl}/og-default.png`;
-
     if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
 
     // Relative path — prepend backend URL

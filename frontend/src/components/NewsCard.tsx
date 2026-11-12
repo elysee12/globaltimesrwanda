@@ -5,6 +5,7 @@ import { getTranslatedCategory } from "@/lib/localization";
 import { normalizeImageUrl } from "@/lib/image-utils";
 import { newsPath } from "@/lib/slug";
 import { formatRelativeDate } from "@/lib/date-utils";
+import type { DateLanguage } from "@/lib/date-utils";
 
 interface NewsCardProps {
   id: number;
@@ -29,10 +30,10 @@ const NewsCard = ({
   featured = false,
   showExcerpt = true,
 }: NewsCardProps) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const translatedCategory = getTranslatedCategory(category, t);
   const to = newsPath(slug, id);
-  const formattedDate = formatRelativeDate(date);
+  const formattedDate = formatRelativeDate(date, language as DateLanguage);
   if (featured) {
     return (
       <Link
@@ -43,7 +44,7 @@ const NewsCard = ({
           <img
             src={normalizeImageUrl(image)}
             alt={title}
-            className="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-500"
+            className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-500"
           />
           <div className="absolute top-4 left-4">
             <span className="px-3 py-1 bg-news-red text-white text-xs font-bold rounded">

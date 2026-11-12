@@ -43,66 +43,94 @@ const Home = () => {
     [articles]
   );
 
-  // Translate all non-story articles when language or articles change
+  // ── Fast sync title/excerpt for immediate render ─────────────────────────
+  // Uses the stored field for the active language directly — no network call.
+  // Falls back to EN if the field is empty, then to RW.
+  const getSyncTitle = (article: typeof nonStoryArticles[0]) => {
+    if (language === 'RW') return article.title.RW || article.title.EN || article.title.FR || '';
+    if (language === 'FR') return article.title.FR || article.title.EN || article.title.RW || '';
+    return article.title.EN || article.title.RW || article.title.FR || '';
+  };
+  const getSyncExcerpt = (article: typeof nonStoryArticles[0]) => {
+    if (language === 'RW') return article.excerpt.RW || article.excerpt.EN || article.excerpt.FR || '';
+    if (language === 'FR') return article.excerpt.FR || article.excerpt.EN || article.excerpt.RW || '';
+    return article.excerpt.EN || article.excerpt.RW || article.excerpt.FR || '';
+  };
+
+  // ── Background translation enhancement ───────────────────────────────────
+  // Only fetches translations for articles where the target language field is
+  // empty (i.e., wasn't filled in at creation time). This avoids blocking the
+  // initial render with network calls.
   useEffect(() => {
-    const translateArticles = async () => {
-      const translations = new Map();
+    const translateMissing = async () => {
       const articlesToTranslate = [
         ...nonStoryArticles.filter(a => a.featured).slice(0, 3),
-        ...nonStoryArticles.slice(0, 12)
-      ];
+        ...nonStoryArticles.slice(0, 12),
+      ].filter((article, idx, self) => self.findIndex(a => a.id === article.id) === idx); // deduplicate
 
-      for (const article of articlesToTranslate) {
-        try {
-          const translated = await getLocalizedArticleFieldsAsync(article, language);
-          translations.set(article.id, {
-            title: translated.title,
-            excerpt: translated.excerpt,
-          });
-        } catch (error) {
-          console.warn(`Translation failed for article ${article.id}:`, error);
-        }
-      }
+      const needsTranslation = articlesToTranslate.filter(article => {
+        const title = language === 'RW' ? article.title.RW
+          : language === 'FR' ? article.title.FR
+          : article.title.EN;
+        return !title || title.trim() === '';
+      });
 
-      setTranslatedData(translations);
+      if (needsTranslation.length === 0) return;
+
+      const translations = new Map(translatedData);
+      await Promise.all(
+        needsTranslation.map(async (article) => {
+          try {
+            const translated = await getLocalizedArticleFieldsAsync(article, language);
+            translations.set(article.id, {
+              title: translated.title,
+              excerpt: translated.excerpt,
+            });
+          } catch {
+            // ignore translation errors — sync fallback is already showing
+          }
+        })
+      );
+      setTranslatedData(new Map(translations));
     };
 
     if (nonStoryArticles.length > 0) {
-      translateArticles();
+      translateMissing();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nonStoryArticles, language]);
   
-  // Get featured news from database - recalculate when language changes
+  // Get featured news — titles shown immediately from stored fields
   const featuredNews = useMemo(() => {
     return nonStoryArticles.filter(a => a.featured).slice(0, 3).map(article => {
-      const translated = translatedData.get(article.id);
+      const override = translatedData.get(article.id);
       return {
         id: article.id,
         slug: article.slug,
-        title: translated?.title || '',
-        excerpt: translated?.excerpt || '',
+        title: override?.title || getSyncTitle(article),
+        excerpt: override?.excerpt || getSyncExcerpt(article),
         category: article.category,
         image: article.image,
         date: article.date,
       };
     });
-  }, [nonStoryArticles, translatedData]);
+  }, [nonStoryArticles, translatedData, language]);
 
-  // Get latest news from database - recalculate when language changes
+  // Get latest news — titles shown immediately from stored fields
   const latestNews = useMemo(() => {
     return nonStoryArticles.slice(0, 12).map(article => {
-      const translated = translatedData.get(article.id);
+      const override = translatedData.get(article.id);
       return {
         id: article.id,
         slug: article.slug,
-        title: translated?.title || '',
-        excerpt: translated?.excerpt || '',
+        title: override?.title || getSyncTitle(article),
+        excerpt: override?.excerpt || getSyncExcerpt(article),
         category: article.category,
         image: article.image,
         date: article.date,
       };
     });
-  }, [nonStoryArticles, translatedData]);
+  }, [nonStoryArticles, translatedData, language]);
 
   const entertainmentNews = latestNews.filter(n => n.category === 'Entertainment').slice(0, 2);
 

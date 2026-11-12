@@ -21,6 +21,7 @@ export interface NewsArticle {
   video?: string; // legacy single video
   imageCaptions?: Record<string, { EN?: string; RW?: string; FR?: string }>; // map of image URLs to captions
   author: string;
+  authorImage?: string; // URL to the author's profile photo
   featured: boolean;
   trending: boolean;
   views: number;
@@ -79,6 +80,7 @@ export interface StatsResponse {
   advertisements: number;
   mediaItems: number;
   admins: number;
+  totalComments: number;
 }
 
 export interface Announcement {
@@ -430,6 +432,15 @@ export const newsAPI = {
       method: 'DELETE',
     });
   },
+
+  /** Fetch related articles in the same category, excluding the given ID */
+  getRelated: async (id: number, category: string, limit = 4): Promise<NewsArticle[]> => {
+    const response = await fetch(
+      `${API_BASE_URL}/news/${id}/related?category=${encodeURIComponent(category)}&limit=${limit}`,
+    );
+    if (!response.ok) return [];
+    return response.json();
+  },
 };
 
 // Advertisement API
@@ -579,9 +590,69 @@ export const statsAPI = {
   },
 };
 
+// Comments API
+export interface Comment {
+  id: number;
+  newsId: number;
+  name: string;
+  email?: string;
+  content: string;
+  approved: boolean;
+  createdAt: string;
+  news?: { id: number; slug: string; titleEN: string };
+}
+
+export const commentsAPI = {
+  /** Fetch approved comments for an article (public) */
+  getByArticle: async (newsId: number): Promise<Comment[]> => {
+    const response = await fetch(`${API_BASE_URL}/comments?newsId=${newsId}`);
+    if (!response.ok) return [];
+    return response.json();
+  },
+
+  /** Count approved comments for an article (public) */
+  countByArticle: async (newsId: number): Promise<number> => {
+    const response = await fetch(`${API_BASE_URL}/comments/count?newsId=${newsId}`);
+    if (!response.ok) return 0;
+    const data = await response.json();
+    return data.count ?? 0;
+  },
+
+  /** Submit a new comment (public — starts unapproved) */
+  submit: async (newsId: number, name: string, content: string, email?: string): Promise<Comment> => {
+    const response = await fetch(`${API_BASE_URL}/comments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ newsId, name, content, ...(email ? { email } : {}) }),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({ message: 'Failed to submit comment' }));
+      throw new Error(err.message || 'Failed to submit comment');
+    }
+    return response.json();
+  },
+
+  /** Admin: get all comments, optionally filtered by approval status */
+  getAll: async (approved?: boolean): Promise<Comment[]> => {
+    const params = approved !== undefined ? `?approved=${approved}` : '';
+    const response = await fetchWithAuth(`/comments/all${params}`);
+    return response.json();
+  },
+
+  /** Admin: approve a comment */
+  approve: async (id: number): Promise<Comment> => {
+    const response = await fetchWithAuth(`/comments/${id}/approve`, { method: 'PATCH' });
+    return response.json();
+  },
+
+  /** Admin: delete a comment */
+  delete: async (id: number): Promise<void> => {
+    await fetchWithAuth(`/comments/${id}`, { method: 'DELETE' });
+  },
+};
+
 // Announcements API
-export const announcementsAPI = {
-  getAll: async (): Promise<Announcement[]> => {
+export const announcementsAPI = {  getAll: async (): Promise<Announcement[]> => {
     const response = await fetchWithAuth('/announcements');
     return response.json();
   },

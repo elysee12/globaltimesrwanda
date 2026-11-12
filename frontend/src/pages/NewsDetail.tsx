@@ -16,11 +16,14 @@ import {
 } from "@/lib/image-utils";
 import { useOgMeta } from "@/hooks/useOgMeta";
 import { formatArticleDateTime } from "@/lib/date-utils";
+import type { DateLanguage } from "@/lib/date-utils";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import ShareButtons from "@/components/ShareButtons";
+import RelatedArticles from "@/components/RelatedArticles";
+import CommentsSection from "@/components/CommentsSection";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, User } from "lucide-react";
-
 const NewsDetail = () => {
   // Route now uses `:slug` instead of `:id` — accepts both "my-title-42" and
   // legacy bare numeric strings like "42" for backward compatibility.
@@ -110,6 +113,17 @@ const NewsDetail = () => {
     );
   }
 
+  // ── Share URL — points directly to the backend /news/:slug route ───────────
+  // This ensures social-platform bots hit the backend endpoint that returns
+  // proper Open Graph HTML rather than the React SPA shell.
+  const backendBase =
+    (import.meta.env.VITE_API_URL as string | undefined) || "http://localhost:3000";
+  const shareUrl = article?.slug
+    ? `${backendBase}/news/${article.slug}`
+    : typeof window !== "undefined"
+    ? window.location.href
+    : "";
+
   // ── Article page ─────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen flex flex-col">
@@ -130,16 +144,35 @@ const NewsDetail = () => {
               </h1>
               <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
-                  <User className="h-4 w-4 text-primary" />
+                  {/* Author photo or fallback icon */}
+                  {article.authorImage ? (
+                    <img
+                      src={normalizeImageUrl(article.authorImage)}
+                      alt={article.author}
+                      className="h-8 w-8 rounded-full object-cover border border-border"
+                    />
+                  ) : (
+                    <User className="h-4 w-4 text-primary" />
+                  )}
                   <span className="font-medium text-foreground">{article.author}</span>
                 </div>
                 <span className="text-muted-foreground/40">|</span>
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-primary" />
                   <time dateTime={new Date(article.date).toISOString()} className="font-medium">
-                    {formatArticleDateTime(article.date)}
+                    {formatArticleDateTime(article.date, language as DateLanguage)}
                   </time>
                 </div>
+              </div>
+
+              {/* ── Social share buttons ───────────────────────────────── */}
+              <div className="mt-4 pt-4 border-t border-border">
+                <ShareButtons
+                  url={shareUrl}
+                  title={localizedArticle.title}
+                  description={localizedArticle.excerpt}
+                  label={t("newsDetail.share")}
+                />
               </div>
             </div>
 
@@ -255,6 +288,13 @@ const NewsDetail = () => {
                 </video>
               </div>
             )}
+
+            {/* ── Related Articles ──────────────────────────────────────── */}
+            <RelatedArticles newsId={article.id} category={article.category} />
+
+            {/* ── Comments ─────────────────────────────────────────────── */}
+            <CommentsSection newsId={article.id} />
+
           </article>
         </div>
       </main>

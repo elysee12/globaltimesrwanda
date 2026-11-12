@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { NewsProvider } from "./contexts/NewsContext";
 import Home from "./pages/Home";
@@ -24,6 +24,7 @@ import ManageNews from "./pages/ManageNews";
 import ManageMedia from "./pages/ManageMedia";
 import ManageAds from "./pages/ManageAds";
 import ManageAnnouncements from "./pages/ManageAnnouncements";
+import ManageComments from "./pages/ManageComments";
 import NewsDetail from "./pages/NewsDetail";
 import AnnouncementDetail from "./pages/AnnouncementDetail";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -57,17 +58,24 @@ const App = () => (
             <Route path="/admin/media" element={<ProtectedRoute><ManageMedia /></ProtectedRoute>} />
             <Route path="/admin/ads" element={<ProtectedRoute><ManageAds /></ProtectedRoute>} />
             <Route path="/admin/announcements" element={<ProtectedRoute><ManageAnnouncements /></ProtectedRoute>} />
+            <Route path="/admin/comments" element={<ProtectedRoute><ManageComments /></ProtectedRoute>} />
             <Route path="/news/:slug" element={<NewsDetail />} />
             <Route path="/announcements/:id" element={<AnnouncementDetail />} />
             <Route path="/politics" element={<Politics />} />
-            <Route path="/business" element={<Business />} />
+            {/* /youth is the new route for Business/Youth category */}
+            <Route path="/youth" element={<Business />} />
+            {/* keep /business as redirect for backward compat */}
+            <Route path="/business" element={<Navigate to="/youth" replace />} />
             <Route path="/technology" element={<Technology />} />
             <Route path="/sports" element={<Sports />} />
             <Route path="/entertainment" element={<Entertainment />} />
             <Route path="/economics" element={<Economics />} />
             <Route path="/education" element={<Education />} />
             <Route path="/my-story" element={<MyStory />} />
-            <Route path="/others" element={<Others />} />
+            {/* /my-district is the new route for Others/My District category */}
+            <Route path="/my-district" element={<Others />} />
+            {/* keep /others as redirect for backward compat */}
+            <Route path="/others" element={<Navigate to="/my-district" replace />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

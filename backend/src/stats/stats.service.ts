@@ -6,18 +6,21 @@ export class StatsService {
   constructor(private prisma: PrismaService) {}
 
   async getStats() {
-    const [articleCount, viewAggregate, advertisementCount, mediaCount, adminCount] =
-      await Promise.all([
-        this.prisma.news.count(),
-        this.prisma.news.aggregate({
-          _sum: {
-            views: true,
-          },
-        }),
-        this.prisma.advertisement.count(),
-        this.prisma.media.count(),
-        this.prisma.admin.count(),
-      ]);
+    const [
+      articleCount,
+      viewAggregate,
+      advertisementCount,
+      mediaCount,
+      adminCount,
+      commentCount,
+    ] = await Promise.all([
+      this.prisma.news.count(),
+      this.prisma.news.aggregate({ _sum: { views: true } }),
+      this.prisma.advertisement.count(),
+      this.prisma.media.count(),
+      this.prisma.admin.count(),
+      this.prisma.comment.count(),
+    ]);
 
     return {
       articles: articleCount,
@@ -25,7 +28,7 @@ export class StatsService {
       advertisements: advertisementCount,
       mediaItems: mediaCount,
       admins: adminCount,
+      totalComments: commentCount,
     };
   }
 }
-

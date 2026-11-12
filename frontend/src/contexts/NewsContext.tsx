@@ -29,6 +29,7 @@ export interface NewsArticle {
   imageCaptions?: Record<string, { EN?: string; RW?: string; FR?: string }>; // map of image URLs to captions
   date: string;
   author: string;
+  authorImage?: string; // URL to author's profile photo
   featured?: boolean;
   trending?: boolean;
 }
@@ -63,6 +64,7 @@ const apiToFrontend = (apiArticle: APINewsArticle): NewsArticle => {
     imageCaptions: apiArticle.imageCaptions,
     date: apiArticle.createdAt,
     author: apiArticle.author,
+    authorImage: apiArticle.authorImage || undefined,
     featured: apiArticle.featured,
     trending: apiArticle.trending,
   };
@@ -86,6 +88,7 @@ const frontendToAPI = (article: NewsArticle): Omit<APINewsArticle, 'id' | 'creat
   videos: article.videos ?? [],
   imageCaptions: article.imageCaptions,
   author: article.author,
+  authorImage: article.authorImage,
   featured: article.featured ?? false,
   trending: article.trending ?? false,
 });

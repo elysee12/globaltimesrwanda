@@ -19,26 +19,26 @@ export const translations = {
     nav: {
       home: "Home",
       politics: "Politics",
-      business: "Business",
+      business: "Youth",
       technology: "Technology",
       sports: "Sports",
       entertainment: "Entertainment",
       economics: "Economics",
       education: "Education",
       myStory: "My Story",
-      others: "Others",
+      others: "My District",
       contact: "Contact"
     },
     categories: {
       Politics: "Politics",
-      Business: "Business",
+      Business: "Youth",
       Technology: "Technology",
       Sports: "Sports",
       Entertainment: "Entertainment",
       Economics: "Economics",
       Education: "Education",
       Story: "Story",
-      Others: "Others"
+      Others: "My District"
     },
     home: {
       latestNews: "Latest News",
@@ -370,7 +370,23 @@ export const translations = {
     newsDetail: {
       notFound: "Article Not Found",
       backHome: "Back to Home",
-      back: "Back"
+      back: "Back",
+      share: "Share",
+      by: "By",
+      relatedArticles: "Related Articles",
+      noRelated: "No related articles found.",
+      comments: "Comments",
+      leaveComment: "Leave a Comment",
+      commentName: "Your Name",
+      commentEmail: "Your Email (optional)",
+      commentEmailPlaceholder: "your@email.com",
+      commentContent: "Your Comment",
+      commentSubmit: "Submit",
+      commentSuccess: "Your comment has been submitted for review. Thank you!",
+      commentError: "Failed to submit comment. Please try again.",
+      noComments: "Be the first to comment.",
+      commentPlaceholder: "Write your comment here...",
+      totalComments: "Total Comments"
     },
     admin: {
       title: "Admin Dashboard",
@@ -378,14 +394,19 @@ export const translations = {
       manageNews: "Manage News Articles",
       manageMedia: "Manage Media",
       manageAds: "Manage Advertisements",
+      manageAnnouncements: "Manage Announcements",
+      manageComments: "Manage Comments",
       statistics: "Statistics",
       totalArticles: "Total Articles",
       totalViews: "Total Views",
+      totalComments: "Total Comments",
       activeUsers: "Active Users",
       manageArticles: "Manage Articles",
       createEdit: "Create, edit, and publish news articles",
       uploadMedia: "Upload and organize media files",
-      controlAds: "Control advertisement placements"
+      controlAds: "Control advertisement placements",
+      manageAnnouncementsDesc: "Create, edit, and manage announcements",
+      manageCommentsDesc: "Review, approve, and delete reader comments"
     },
     footer: {
       about: "About Us",
@@ -416,26 +437,26 @@ export const translations = {
     nav: {
       home: "Ahabanza",
       politics: "Politiki",
-      business: "Ubucuruzi",
+      business: "Urubyiruko",
       technology: "Ikoranabuhanga",
       sports: "Siporo",
       entertainment: "Imyidagaduro",
       economics: "Ubukungu",
       education: "Uburezi",
       myStory: "Inkuru zanjye",
-      others: "Izindi",
+      others: "Akarere kanjye",
       contact: "Twandikire"
     },
     categories: {
       Politics: "Politiki",
-      Business: "Ubucuruzi",
+      Business: "Urubyiruko",
       Technology: "Ikoranabuhanga",
       Sports: "Siporo",
       Entertainment: "Imyidagaduro",
       Economics: "Ubukungu",
       Education: "Uburezi",
       Story: "Inkuru",
-      Others: "Izindi"
+      Others: "Akarere kanjye"
     },
     home: {
       latestNews: "Amakuru Mashya",
@@ -768,7 +789,23 @@ export const translations = {
     newsDetail: {
       notFound: "Inkuru Ntiyabonetse",
       backHome: "Subira Ahabanza",
-      back: "Subira"
+      back: "Subira",
+      share: "Sangiza aya makuru",
+      by: "Na",
+      relatedArticles: "Izindi Nkuru Zisa",
+      noRelated: "Nta zindi nkuru zisa zibonetse.",
+      comments: "Ibitekerezo",
+      leaveComment: "Siga Igitekerezo",
+      commentName: "Izina Ryawe",
+      commentEmail: "Imeli Yawe (ntibisabwa)",
+      commentEmailPlaceholder: "imeli@yawe.com",
+      commentContent: "Igitekerezo Cyawe",
+      commentSubmit: "Ohereza",
+      commentSuccess: "Igitekerezo cyawe cyoherejwe kugenzurwa. Murakoze!",
+      commentError: "Ntibishobotse kohereza igitekerezo. Ongera ugerageze.",
+      noComments: "Banza utange igitekerezo.",
+      commentPlaceholder: "Andika hano igitekerezo cyawe...",
+      totalComments: "Ibitekerezo Byose"
     },
     admin: {
       title: "Ikibanza cya Admin",
@@ -776,14 +813,19 @@ export const translations = {
       manageNews: "Gucunga Amakuru",
       manageMedia: "Gucunga Amashusho n'Amashusho",
       manageAds: "Gucunga Amatangazo",
+      manageAnnouncements: "Gucunga Amatangazo Akomeye",
+      manageComments: "Gucunga Ibitekerezo",
       statistics: "Imibare",
       totalArticles: "Inyandiko Zose",
       totalViews: "Abareba Bose",
+      totalComments: "Ibitekerezo Byose",
       activeUsers: "Abakoresha Bakora",
       manageArticles: "Gucunga Inkuru",
       createEdit: "Kurema, guhindura no gutangaza inkuru",
       uploadMedia: "Kohereza no gutunganya dosiye z'ibishushanyo",
-      controlAds: "Gucunga ahantu h'amatangazo"
+      controlAds: "Gucunga ahantu h'amatangazo",
+      manageAnnouncementsDesc: "Kurema, guhindura no gucunga amatangazo",
+      manageCommentsDesc: "Kureba, kwemeza no gusiba ibitekerezo by'abasomyi"
     },
     footer: {
       about: "Twebwe",
@@ -814,26 +856,26 @@ export const translations = {
     nav: {
       home: "Accueil",
       politics: "Politique",
-      business: "Affaires",
+      business: "Jeunesse",
       technology: "Technologie",
       sports: "Sports",
       entertainment: "Divertissement",
       economics: "Économie",
       education: "Éducation",
       myStory: "Mon histoire",
-      others: "Autres",
+      others: "Mon District",
       contact: "Contact"
     },
     categories: {
       Politics: "Politique",
-      Business: "Affaires",
+      Business: "Jeunesse",
       Technology: "Technologie",
       Sports: "Sports",
       Entertainment: "Divertissement",
       Economics: "Économie",
       Education: "Éducation",
       Story: "Histoire",
-      Others: "Autres"
+      Others: "Mon District"
     },
     home: {
       latestNews: "Dernières Nouvelles",
@@ -1165,7 +1207,23 @@ export const translations = {
     newsDetail: {
       notFound: "Article Non Trouvé",
       backHome: "Retour à l'Accueil",
-      back: "Retour"
+      back: "Retour",
+      share: "Partager cet article",
+      by: "Par",
+      relatedArticles: "Articles Similaires",
+      noRelated: "Aucun article similaire trouvé.",
+      comments: "Commentaires",
+      leaveComment: "Laisser un Commentaire",
+      commentName: "Votre Nom",
+      commentEmail: "Votre Email (optionnel)",
+      commentEmailPlaceholder: "votre@email.com",
+      commentContent: "Votre Commentaire",
+      commentSubmit: "Soumettre",
+      commentSuccess: "Votre commentaire a été soumis pour modération. Merci!",
+      commentError: "Échec de l'envoi du commentaire. Veuillez réessayer.",
+      noComments: "Soyez le premier à commenter.",
+      commentPlaceholder: "Écrivez votre commentaire ici...",
+      totalComments: "Total Commentaires"
     },
     admin: {
       title: "Tableau de Bord Admin",
@@ -1173,14 +1231,19 @@ export const translations = {
       manageNews: "Gérer les Articles",
       manageMedia: "Gérer les Médias",
       manageAds: "Gérer les Publicités",
+      manageAnnouncements: "Gérer les Annonces",
+      manageComments: "Gérer les Commentaires",
       statistics: "Statistiques",
       totalArticles: "Total d'Articles",
       totalViews: "Total de Vues",
+      totalComments: "Total Commentaires",
       activeUsers: "Utilisateurs Actifs",
       manageArticles: "Gérer les Articles",
       createEdit: "Créer, modifier et publier des articles d'actualité",
       uploadMedia: "Télécharger et organiser les fichiers médias",
-      controlAds: "Contrôler les emplacements publicitaires"
+      controlAds: "Contrôler les emplacements publicitaires",
+      manageAnnouncementsDesc: "Créer, modifier et gérer les annonces",
+      manageCommentsDesc: "Examiner, approuver et supprimer les commentaires des lecteurs"
     },
     footer: {
       about: "À Propos",

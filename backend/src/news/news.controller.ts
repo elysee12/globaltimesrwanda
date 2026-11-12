@@ -103,4 +103,19 @@ export class NewsController {
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.newsService.findOne(id);
   }
+
+  /**
+   * GET /news/:id/related?category=Sports&limit=4
+   * Returns articles in the same category, excluding the current one.
+   * NOTE: This route is defined AFTER :id but NestJS resolves :id/related
+   * correctly as a two-segment pattern distinct from bare :id.
+   */
+  @Get(':id/related')
+  getRelated(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('category') category: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.newsService.getRelated(id, category, limit ? parseInt(limit) : 4);
+  }
 }

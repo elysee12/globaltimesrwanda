@@ -61,6 +61,10 @@ export class CreateNewsDto {
   author: string;
 
   @IsOptional()
+  @IsString()
+  authorImage?: string;
+
+  @IsOptional()
   @IsBoolean()
   featured?: boolean;
 
@@ -132,6 +136,10 @@ export class UpdateNewsDto {
   @IsOptional()
   @IsString()
   author?: string;
+
+  @IsOptional()
+  @IsString()
+  authorImage?: string;
 
   @IsOptional()
   @IsBoolean()
@@ -339,6 +347,15 @@ export class NewsService {
   async getTrending(limit: number = 5) {
     return this.prisma.news.findMany({
       where: { trending: true },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+  }
+
+  /** Returns articles in the same category, excluding the current article */
+  async getRelated(newsId: number, category: string, limit: number = 4) {
+    return this.prisma.news.findMany({
+      where: { category, id: { not: newsId } },
       orderBy: { createdAt: 'desc' },
       take: limit,
     });

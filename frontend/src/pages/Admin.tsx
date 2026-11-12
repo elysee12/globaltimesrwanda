@@ -5,7 +5,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Image, BarChart3, Video, LogOut, Megaphone, Eye, EyeOff } from "lucide-react";
+import { FileText, Image, BarChart3, Video, LogOut, Megaphone, Eye, EyeOff, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
 import { statsAPI, StatsResponse, authAPI } from "@/lib/api";
@@ -219,6 +219,20 @@ const Admin = () => {
             <Card className="border-primary/20 hover:shadow-lg transition-shadow">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
+                  <MessageCircle className="h-5 w-5 text-primary" />
+                  {t('admin.totalComments')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold text-primary">
+                  {loading ? "…" : stats?.totalComments ?? 0}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-primary/20 hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
                   <BarChart3 className="h-5 w-5 text-primary" />
                   {t('admin.activeUsers')}
                 </CardTitle>
@@ -275,12 +289,25 @@ const Admin = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Megaphone className="h-5 w-5 text-primary" />
-                  Manage Announcements
+                  {t('admin.manageAnnouncements')}
                 </CardTitle>
-                <CardDescription>Create, edit, and manage announcements</CardDescription>
+                <CardDescription>{t('admin.manageAnnouncementsDesc')}</CardDescription>
               </CardHeader>
               <CardContent>
-                <Button className="w-full" onClick={() => navigate("/admin/announcements")}>Manage Announcements</Button>
+                <Button className="w-full" onClick={() => navigate("/admin/announcements")}>{t('admin.manageAnnouncements')}</Button>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageCircle className="h-5 w-5 text-primary" />
+                  {t('admin.manageComments')}
+                </CardTitle>
+                <CardDescription>{t('admin.manageCommentsDesc')}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button className="w-full" onClick={() => navigate("/admin/comments")}>{t('admin.manageComments')}</Button>
               </CardContent>
             </Card>
           </div>

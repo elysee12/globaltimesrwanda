@@ -37,7 +37,7 @@ const Footer = () => {
             <ul className="space-y-2 text-sm">
               <li><Link to="/" className="hover:text-gold transition-colors">{t('nav.home')}</Link></li>
               <li><Link to="/politics" className="hover:text-gold transition-colors">{t('nav.politics')}</Link></li>
-              <li><Link to="/business" className="hover:text-gold transition-colors">{t('nav.business')}</Link></li>
+              <li><Link to="/youth" className="hover:text-gold transition-colors">{t('nav.business')}</Link></li>
               <li><Link to="/sports" className="hover:text-gold transition-colors">{t('nav.sports')}</Link></li>
               <li><Link to="/economics" className="hover:text-gold transition-colors">{t('nav.economics')}</Link></li>
             </ul>
@@ -50,7 +50,7 @@ const Footer = () => {
               <li><Link to="/technology" className="hover:text-gold transition-colors">{t('nav.technology')}</Link></li>
               <li><Link to="/entertainment" className="hover:text-gold transition-colors">{t('nav.entertainment')}</Link></li>
               <li><Link to="/education" className="hover:text-gold transition-colors">{t('nav.education')}</Link></li>
-              <li><Link to="/others" className="hover:text-gold transition-colors">{t('nav.others')}</Link></li>
+              <li><Link to="/my-district" className="hover:text-gold transition-colors">{t('nav.others')}</Link></li>
               <li><Link to="/contact" className="hover:text-gold transition-colors">{t('nav.contact')}</Link></li>
             </ul>
           </div>

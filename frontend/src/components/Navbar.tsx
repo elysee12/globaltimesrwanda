@@ -14,7 +14,6 @@ import englandFlag from "@/assets/england.jpg";
 import rwandaFlag from "@/assets/rwanda.png";
 import franceFlag from "@/assets/france.jpg";
 import logo from "@/assets/Logo.jpg";
-import whatsappIcon from "@/assets/watsapp.jpg";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -28,30 +27,41 @@ const Navbar = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const formattedDate = now.toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
-  const formattedTime = now.toLocaleTimeString('en-US', {
+  // Kinyarwanda month/day names (browser has no rw-RW locale support)
+  const RW_WEEKDAYS = ['Ku cyumweru', 'Kuwa mbere', 'Kuwa kabiri', 'Kuwa gatatu', 'Kuwa kane', 'Kuwa gatanu', 'Kuwa gatandatu'];
+  const RW_MONTHS  = ['Mutarama', 'Gashyantare', 'Werurwe', 'Mata', 'Gicurasi', 'Kamena', 'Nyakanga', 'Kanama', 'Nzeli', 'Ukwakira', 'Ugushyingo', 'Ukuboza'];
+
+  const formattedDate = (() => {
+    if (language === 'RW') {
+      return `${RW_WEEKDAYS[now.getDay()]}, ${now.getDate()} ${RW_MONTHS[now.getMonth()]} ${now.getFullYear()}`;
+    }
+    const locale = language === 'FR' ? 'fr-FR' : 'en-US';
+    return now.toLocaleDateString(locale, {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  })();
+
+  const formattedTime = now.toLocaleTimeString(language === 'FR' ? 'fr-FR' : 'en-US', {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
-    hour12: true,
+    hour12: language !== 'FR',
   });
 
   const categories = [
     { name: t("nav.home"), path: "/" },
     { name: t("nav.politics"), path: "/politics" },
-    { name: t("nav.business"), path: "/business" },
+    { name: t("nav.business"), path: "/youth" },
     { name: t("nav.technology"), path: "/technology" },
     { name: t("nav.sports"), path: "/sports" },
     { name: t("nav.entertainment"), path: "/entertainment" },
     { name: t("nav.economics"), path: "/economics" },
     { name: t("nav.education"), path: "/education" },
     { name: t("nav.myStory"), path: "/my-story" },
-    { name: t("nav.others"), path: "/others" },
+    { name: t("nav.others"), path: "/my-district" },
     { name: "Videos", path: "https://www.youtube.com/@RobertBashimiki250", external: true },
     { name: t("nav.contact"), path: "/contact" },
   ];
@@ -72,6 +82,9 @@ const Navbar = () => {
     if (path === "/") {
       return location.pathname === "/";
     }
+    // Handle renamed routes — both old and new paths highlight the same nav item
+    if (path === "/youth") return location.pathname === "/youth" || location.pathname === "/business";
+    if (path === "/my-district") return location.pathname === "/my-district" || location.pathname === "/others";
     return location.pathname.startsWith(path);
   };
 
@@ -148,10 +161,19 @@ const Navbar = () => {
                 href="https://wa.me/250784625552"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors p-2"
                 aria-label="Chat on WhatsApp"
+                title="Chat on WhatsApp"
+                className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-[#25D366] hover:bg-[#20ba5a] active:scale-95 transition-all shadow-md"
               >
-                <img src={whatsappIcon} alt="WhatsApp" className="h-5 w-5 object-contain" />
+                {/* Official WhatsApp SVG icon */}
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-5 w-5 fill-white"
+                  aria-hidden="true"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                </svg>
               </a>
             </div>
           </div>
@@ -170,20 +192,20 @@ const Navbar = () => {
 
       {/* Navigation */}
       <nav className="bg-news-red">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-2">
           <div className="flex items-center justify-between">
-            {/* Desktop Menu */}
-            <ul className="hidden md:flex items-center space-x-1">
+            {/* Desktop Menu — distribute all items evenly across the full bar */}
+            <ul className="hidden md:flex items-center w-full justify-between">
               {categories.map((category) => {
                 const active = isActivePath(category.path);
                 if (category.external) {
                   return (
-                    <li key={category.name}>
+                    <li key={category.name} className="flex-1 text-center">
                       <a
                         href={category.path}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="relative block px-4 py-3 font-semibold text-white hover:bg-white/10 transition-colors"
+                        className="relative block px-1 py-3 text-xs lg:text-sm font-semibold text-white hover:bg-white/10 transition-colors whitespace-nowrap"
                       >
                         {category.name}
                       </a>
@@ -191,19 +213,19 @@ const Navbar = () => {
                   );
                 }
                 return (
-                <li key={category.path}>
-                  <Link
-                    to={category.path}
-                      className={`relative block px-4 py-3 font-semibold transition-colors ${
+                  <li key={category.path} className="flex-1 text-center">
+                    <Link
+                      to={category.path}
+                      className={`relative block px-1 py-3 text-xs lg:text-sm font-semibold transition-colors whitespace-nowrap ${
                         active ? "bg-white/15 text-white" : "text-white hover:bg-white/10"
                       }`}
-                  >
-                    {category.name}
+                    >
+                      {category.name}
                       {active && (
-                        <span className="absolute inset-x-2 bottom-1 h-0.5 bg-gold rounded-full" />
+                        <span className="absolute inset-x-1 bottom-1 h-0.5 bg-gold rounded-full" />
                       )}
-                  </Link>
-                </li>
+                    </Link>
+                  </li>
                 );
               })}
             </ul>
@@ -220,7 +242,7 @@ const Navbar = () => {
           {/* Mobile Menu */}
           {isMenuOpen && (
             <div className="md:hidden pb-4 animate-slide-up">
-              <ul className="space-y-2">
+              <ul className="space-y-1">
                 {categories.map((category) => {
                   const active = isActivePath(category.path);
                   if (category.external) {
@@ -230,7 +252,7 @@ const Navbar = () => {
                           href={category.path}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="relative block px-4 py-2 text-white hover:bg-white/10 transition-colors"
+                          className="relative block px-4 py-2.5 text-sm text-white hover:bg-white/10 transition-colors font-medium"
                           onClick={() => setIsMenuOpen(false)}
                         >
                           {category.name}
@@ -239,20 +261,20 @@ const Navbar = () => {
                     );
                   }
                   return (
-                  <li key={category.path}>
-                    <Link
-                      to={category.path}
-                        className={`relative block px-4 py-2 transition-colors ${
+                    <li key={category.path}>
+                      <Link
+                        to={category.path}
+                        className={`relative block px-4 py-2.5 text-sm font-medium transition-colors ${
                           active ? "bg-white/15 text-white" : "text-white hover:bg-white/10"
                         }`}
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      {category.name}
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        {category.name}
                         {active && (
                           <span className="absolute inset-x-2 bottom-1 h-0.5 bg-gold rounded-full" />
                         )}
-                    </Link>
-                  </li>
+                      </Link>
+                    </li>
                   );
                 })}
               </ul>

@@ -41,12 +41,14 @@ const ManageNews = () => {
     video: "",
     imageCaptions: {} as Record<string, { EN?: string; RW?: string; FR?: string }>,
     author: "Admin",
+    authorImage: "",
     featured: false,
     trending: false,
   });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [selectedImageFiles, setSelectedImageFiles] = useState<File[]>([]);
   const [selectedVideoFile, setSelectedVideoFile] = useState<File | null>(null);
+  const [selectedAuthorImageFile, setSelectedAuthorImageFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [primaryLanguage, setPrimaryLanguage] = useState<'EN' | 'RW' | 'FR'>('EN');
   const [activeLanguageTab, setActiveLanguageTab] = useState<'EN' | 'RW' | 'FR'>('EN');
@@ -145,7 +147,14 @@ const ManageNews = () => {
         // REPLACE existing videos with the newly uploaded one
         videosArr = [uploaded.url];
       }
-      
+
+      // Upload author image if a new one was selected
+      let authorImageUrl = formData.authorImage;
+      if (selectedAuthorImageFile) {
+        const uploaded = await uploadAPI.uploadFile(selectedAuthorImageFile);
+        authorImageUrl = uploaded.url;
+      }
+
       const article = {
         id: editingId ?? 0,
         slug: '',   // backend generates the real slug; this is just a placeholder
@@ -160,6 +169,7 @@ const ManageNews = () => {
         imageCaptions: formData.imageCaptions || {},
         date: new Date().toISOString(),
         author: formData.author,
+        authorImage: authorImageUrl || undefined,
         featured: formData.featured,
         trending: formData.trending,
       };
@@ -188,11 +198,13 @@ const ManageNews = () => {
       titleEN: "", titleRW: "", titleFR: "",
       excerptEN: "", excerptRW: "", excerptFR: "",
       contentEN: "", contentRW: "", contentFR: "",
-      category: "Politics", image: "", images: [], videos: [], video: "", imageCaptions: {}, author: "Admin", featured: false, trending: false
+      category: "Politics", image: "", images: [], videos: [], video: "",
+      imageCaptions: {}, author: "Admin", authorImage: "", featured: false, trending: false
     });
     setEditingId(null);
     setSelectedImageFiles([]);
     setSelectedVideoFile(null);
+    setSelectedAuthorImageFile(null);
     if (imageInputRef.current) imageInputRef.current.value = '';
     if (videoInputRef.current) videoInputRef.current.value = '';
   };
@@ -226,6 +238,7 @@ const ManageNews = () => {
       video: article.video || "",
       imageCaptions: normalizedCaptions,
       author: article.author,
+      authorImage: article.authorImage || "",
       featured: article.featured || false,
       trending: article.trending || false
     });
@@ -410,20 +423,72 @@ const ManageNews = () => {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="Politics">Politics</SelectItem>
-                          <SelectItem value="Business">Business</SelectItem>
+                          <SelectItem value="Business">Youth (Urubyiruko)</SelectItem>
                           <SelectItem value="Technology">Technology</SelectItem>
                           <SelectItem value="Sports">Sports</SelectItem>
                           <SelectItem value="Entertainment">Entertainment</SelectItem>
                           <SelectItem value="Economics">Economics</SelectItem>
                           <SelectItem value="Education">Education</SelectItem>
-                          <SelectItem value="Story">Story</SelectItem>
-                          <SelectItem value="Others">Others</SelectItem>
+                          <SelectItem value="Story">My Story</SelectItem>
+                          <SelectItem value="Others">My District (Akarere kanjye)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div>
                       <Label>Author</Label>
                       <Input value={formData.author} onChange={(e) => setFormData({...formData, author: e.target.value})} required />
+                    </div>
+                  </div>
+
+                  {/* Author profile photo */}
+                  <div>
+                    <Label>Author Profile Photo</Label>
+                    <div className="flex items-center gap-4 mt-1">
+                      {/* Preview current photo */}
+                      {formData.authorImage && !selectedAuthorImageFile ? (
+                        <img
+                          src={normalizeImageUrl(formData.authorImage)}
+                          alt="Author"
+                          className="h-14 w-14 rounded-full object-cover border-2 border-border"
+                        />
+                      ) : selectedAuthorImageFile ? (
+                        <img
+                          src={URL.createObjectURL(selectedAuthorImageFile)}
+                          alt="Author preview"
+                          className="h-14 w-14 rounded-full object-cover border-2 border-primary"
+                        />
+                      ) : (
+                        <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center border-2 border-dashed border-border">
+                          <Upload className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div className="flex-1">
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            if (!file.type.startsWith('image/')) { toast.error('Only image files allowed'); return; }
+                            if (file.size > 2 * 1024 * 1024) { toast.error('Author photo must be under 2MB'); return; }
+                            setSelectedAuthorImageFile(file);
+                          }}
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">Recommended: square image, max 2MB</p>
+                      </div>
+                      {(formData.authorImage || selectedAuthorImageFile) && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedAuthorImageFile(null);
+                            setFormData(prev => ({ ...prev, authorImage: "" }));
+                          }}
+                        >
+                          Remove
+                        </Button>
+                      )}
                     </div>
                   </div>
 

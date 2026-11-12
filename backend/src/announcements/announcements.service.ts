@@ -130,6 +130,8 @@ export class AnnouncementsService {
       Object.entries(updateAnnouncementDto).filter(([, v]) => v !== undefined)
     );
 
+    
+
     return this.prisma.announcement.update({
       where: { id },
       data,

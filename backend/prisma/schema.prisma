@@ -41,8 +41,6 @@ model Session {
 
 model News {
   id            Int       @id @default(autoincrement())
-  // SEO-friendly URL slug generated from titleEN, e.g. "government-announces-new-education-policy-42"
-  // The numeric ID is always appended to guarantee uniqueness.
   slug          String    @unique
   titleEN       String
   titleRW       String
@@ -50,22 +48,24 @@ model News {
   excerptEN     String    @db.Text
   excerptRW     String    @db.Text
   excerptFR     String    @db.Text
-  contentEN     String    @db.LongText // allow rich HTML/JSON
+  contentEN     String    @db.LongText
   contentRW     String    @db.LongText
   contentFR     String    @db.LongText
   category      String
-  image         String?   // legacy single image
-  images        Json?     // gallery of images (URLs) stored as JSON array
-  videos        Json?     // list of embedded video URLs stored as JSON array
-  video         String?   // legacy single video
-  imageCaptions Json?     // map of image URLs to captions: { "url": { "EN": "...", "RW": "...", "FR": "..." } }
+  image         String?
+  images        Json?
+  videos        Json?
+  video         String?
+  imageCaptions Json?
   author        String
+  authorImage   String?
   featured      Boolean   @default(false)
   trending      Boolean   @default(false)
   views         Int       @default(0)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   publishedAt   DateTime?
+  comments      Comment[]
 
   @@index([slug])
   @@index([category])
@@ -73,6 +73,21 @@ model News {
   @@index([trending])
   @@index([createdAt])
   @@map("news")
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  newsId    Int
+  news      News     @relation(fields: [newsId], references: [id], onDelete: Cascade)
+  name      String   @db.VarChar(100)
+  email     String?  @db.VarChar(191)
+  content   String   @db.Text
+  approved  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([newsId])
+  @@index([approved])
+  @@map("comments")
 }
 
 model Advertisement {
